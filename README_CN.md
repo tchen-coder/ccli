@@ -110,6 +110,8 @@ ccli config
 
 运行 `ccli --help`、`ccli llm --help` 或 `ccli session --help` 查看内置帮助。
 
+交互式终端默认启用颜色输出。设置 `NO_COLOR=1` 可关闭颜色；如果将输出重定向到文件，也会自动输出纯文本。
+
 ## 示例
 
 ```bash

@@ -1,5 +1,6 @@
 use crate::config::AppConfig;
 use crate::session;
+use crate::ui;
 use std::env;
 use std::fs;
 use std::io::{BufRead, BufReader};
@@ -36,18 +37,18 @@ fn resolve_provider(provider_key: Option<&str>) -> (String, String, String, Stri
         .map(String::from)
         .or(config.default_provider.clone())
         .unwrap_or_else(|| {
-            eprintln!("No provider specified and no default set. Run `ccli llm add` first.");
+            ui::error("no provider specified and no default set; run `ccli llm add` first");
             std::process::exit(1);
         });
     let provider = config.providers.get(&key).unwrap_or_else(|| {
-        eprintln!("Provider '{key}' not found. Run `ccli llm list`.");
+        ui::error(format!("provider '{key}' not found; run `ccli llm list`"));
         std::process::exit(1);
     });
     let api_key = provider
         .api_key.clone()
         .or_else(|| provider.api_key_env.as_ref().and_then(|v| env::var(v).ok()))
         .unwrap_or_else(|| {
-            eprintln!("No API key for provider '{key}'.");
+            ui::error(format!("no API key for provider '{key}'"));
             std::process::exit(1);
         });
     (key, provider.base_url.clone(), api_key, provider.model.clone())
@@ -176,17 +177,19 @@ pub fn launch(provider_key: Option<&str>) {
     let claude_sid = uuid::Uuid::new_v4().to_string();
     let ccli_id = session::record(&key, &model, &claude_sid);
 
-    println!("Launching Claude Code with [{key}] model={model}");
-    println!("  session: {ccli_id} → claude:{}", &claude_sid[..8]);
+    ui::section("Launching Claude Code");
+    ui::kv("Provider", ui::accent(&key));
+    ui::kv("Model", ui::accent(&model));
+    ui::kv("Session", format!("{}  {}", ui::accent(&ccli_id), ui::muted(format!("→ claude:{}", &claude_sid[..8]))));
 
     let mut cmd = build_claude_command(&settings_path, &model, &claude_sid, &ccli_id);
     let status = cmd.status();
 
     match status {
         Ok(s) if s.success() || s.code().is_some() => {}
-        Ok(s) => eprintln!("Claude exited with: {s}"),
+        Ok(s) => ui::warning(format!("Claude exited with: {s}")),
         Err(e) => {
-            eprintln!("Failed to launch claude: {e}");
+            ui::error(format!("failed to launch claude: {e}"));
             std::process::exit(1);
         }
     }
@@ -202,7 +205,10 @@ pub fn launch_resume(provider_key: &str, claude_session_id: &str, working_dir: &
     let (_, base_url, api_key, model) = resolve_provider(Some(provider_key));
     let settings_path = write_launch_settings(&base_url, &api_key);
 
-    println!("Resuming Claude session {}", &claude_session_id[..8]);
+    ui::section("Resuming Claude Code session");
+    ui::kv("Provider", ui::accent(provider_key));
+    ui::kv("Model", ui::accent(&model));
+    ui::kv("Session", ui::accent(&claude_session_id[..8]));
 
     let mut cmd = Command::new("claude");
     sanitize_claude_env(&mut cmd);
@@ -222,7 +228,7 @@ pub fn launch_resume(provider_key: &str, claude_session_id: &str, working_dir: &
     match cmd.status() {
         Ok(_) => {}
         Err(e) => {
-            eprintln!("Failed to launch claude: {e}");
+            ui::error(format!("failed to launch claude: {e}"));
             std::process::exit(1);
         }
     }

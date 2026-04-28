@@ -1,8 +1,9 @@
 use crate::config::{AppConfig, Provider};
+use crate::ui;
 use std::io::{self, Write};
 
 fn prompt(label: &str) -> String {
-    print!("{label}: ");
+    print!("{}: ", ui::prompt_label(label));
     io::stdout().flush().unwrap();
     let mut buf = String::new();
     io::stdin().read_line(&mut buf).unwrap();
@@ -25,9 +26,9 @@ const PRESETS: &[Preset] = &[
 
 fn prompt_with_default(label: &str, default: &str) -> String {
     if default.is_empty() {
-        print!("{label}: ");
+        print!("{}: ", ui::prompt_label(label));
     } else {
-        print!("{label} [{default}]: ");
+        print!("{} [{}]: ", ui::prompt_label(label), ui::muted(default));
     }
     io::stdout().flush().unwrap();
     let mut buf = String::new();
@@ -37,14 +38,20 @@ fn prompt_with_default(label: &str, default: &str) -> String {
 }
 
 pub fn add() {
-    println!("Available presets:");
+    ui::section("Provider presets");
     for (i, p) in PRESETS.iter().enumerate() {
-        println!("  {}. {} - {} (model: {})", i + 1, p.key, p.base_url, p.model);
+        println!(
+            "  {} {}  {}  {}",
+            ui::accent(format!("{}.", i + 1)),
+            ui::accent(p.key),
+            ui::muted(p.base_url),
+            ui::muted(format!("model={}", p.model))
+        );
     }
-    println!("  0. Custom provider");
+    println!("  {} {}", ui::accent("0."), ui::muted("Custom provider"));
     println!();
 
-    let choice = prompt("Select (0-4)");
+    let choice = prompt("Select");
     let preset = choice.parse::<usize>().ok().and_then(|i| {
         if i == 0 { None } else { PRESETS.get(i - 1) }
     });
@@ -65,8 +72,8 @@ pub fn add() {
         println!();
     }
 
-    println!("Enter your API key, or type env:VAR_NAME to read from an environment variable.");
-    println!("  Example: sk-abc123... or env:DEEPSEEK_API_KEY");
+    ui::hint("Enter your API key, or type env:VAR_NAME to read from an environment variable.");
+    ui::hint("Example: sk-abc123... or env:DEEPSEEK_API_KEY");
     let api_input = prompt("API key");
 
     let (api_key, api_key_env) = if let Some(var) = api_input.strip_prefix("env:") {
@@ -83,7 +90,8 @@ pub fn add() {
     }
     config.save().expect("failed to save config");
     println!();
-    println!("Provider '{key}' added. Run `ccli use {key}` to start Claude Code with it.");
+    ui::success_with_label("added", format!("provider {}", ui::accent(format!("'{key}'"))));
+    ui::hint(format!("Run `ccli use {key}` to start Claude Code."));
 }
 
 pub fn remove(name: &str) {
@@ -93,9 +101,9 @@ pub fn remove(name: &str) {
             config.default_provider = config.providers.keys().next().cloned();
         }
         config.save().expect("failed to save config");
-        println!("Provider '{name}' removed.");
+        ui::success_with_label("removed", format!("provider {}", ui::accent(format!("'{name}'"))));
     } else {
-        eprintln!("Provider '{name}' not found.");
+        ui::error(format!("provider '{name}' not found"));
     }
 }
 
@@ -104,21 +112,32 @@ pub fn set_default(name: &str) {
     if config.providers.contains_key(name) {
         config.default_provider = Some(name.to_string());
         config.save().expect("failed to save config");
-        println!("Default provider set to '{name}'.");
+        ui::success_with_label("default", format!("provider set to {}", ui::accent(format!("'{name}'"))));
     } else {
-        eprintln!("Provider '{name}' not found.");
+        ui::error(format!("provider '{name}' not found"));
     }
 }
 
 pub fn list() {
     let config = AppConfig::load();
     if config.providers.is_empty() {
-        println!("No providers configured. Run `ccli provider add` to add one.");
+        ui::warning("no providers configured; run `ccli llm add`");
         return;
     }
     let default = config.default_provider.as_deref().unwrap_or("");
+    ui::section("Providers");
     for (key, p) in &config.providers {
-        let marker = if key == default { " *" } else { "" };
-        println!("  {key}{marker}  ({})  model={}", p.base_url, p.model);
+        let marker = if key == default {
+            format!(" {}", ui::accent("(default)"))
+        } else {
+            String::new()
+        };
+        println!(
+            "  {}{}  {}  {}",
+            ui::accent(key),
+            marker,
+            ui::muted(format!("model={}", p.model)),
+            ui::muted(format!("({})", p.base_url))
+        );
     }
 }

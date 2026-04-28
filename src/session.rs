@@ -1,5 +1,6 @@
 use crate::config::AppConfig;
 use crate::launcher;
+use crate::ui;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -74,7 +75,7 @@ pub fn update(id: &str, summary: Option<&str>) {
 pub fn list() {
     let sessions = load_sessions();
     if sessions.is_empty() {
-        println!("No sessions recorded yet.");
+        ui::warning("no sessions recorded yet");
         return;
     }
 
@@ -84,43 +85,62 @@ pub fn list() {
         grouped.entry(key).or_default().push(s);
     }
 
+    ui::section("Sessions");
     for (group, items) in &grouped {
-        println!("\n  {group}");
+        println!("  {}", ui::accent(group));
         for s in items.iter().rev().take(10) {
             let ts = &s.started_at[..16];
             let summary = s.summary.as_deref().unwrap_or("-");
-            let resumable = if s.claude_session_id.is_some() { "+" } else { " " };
-            println!("    {}{} {}  {}  \"{}\"", resumable, s.id, ts, s.working_dir, summary);
+            let resumable = if s.claude_session_id.is_some() {
+                ui::accent("+")
+            } else {
+                ui::muted("-")
+            };
+            println!(
+                "    {} {}  {}  {}  \"{}\"",
+                resumable,
+                ui::accent(&s.id),
+                ui::muted(ts),
+                ui::muted(&s.working_dir),
+                summary
+            );
         }
+        println!();
     }
-    println!();
-    println!("  + = resumable. Use `ccli session resume <id>` to resume.");
+    ui::hint("+ = resumable. Use `ccli session resume <id>` to resume.");
 }
 
 pub fn info(id: &str) {
     let sessions = load_sessions();
     match sessions.iter().find(|s| s.id == id) {
         Some(s) => {
-            println!("Session:    {}", s.id);
-            println!("  Provider:    {}", s.provider);
-            println!("  Model:       {}", s.model);
-            println!("  Working dir: {}", s.working_dir);
-            println!("  Started at:  {}", s.started_at);
-            println!("  Claude SID:  {}", s.claude_session_id.as_deref().unwrap_or("(none)"));
-            println!("  Summary:     {}", s.summary.as_deref().unwrap_or("(none)"));
+            ui::section("Session details");
+            ui::kv("Session", ui::accent(&s.id));
+            ui::kv("Provider", ui::accent(&s.provider));
+            ui::kv("Model", ui::accent(&s.model));
+            ui::kv("Work dir", ui::muted(&s.working_dir));
+            ui::kv("Started", ui::muted(&s.started_at));
+            ui::kv(
+                "Claude SID",
+                s.claude_session_id
+                    .as_deref()
+                    .map(ui::accent)
+                    .unwrap_or_else(|| ui::muted("(none)")),
+            );
+            ui::kv("Summary", s.summary.as_deref().unwrap_or("(none)"));
         }
-        None => eprintln!("Session '{id}' not found."),
+        None => ui::error(format!("session '{id}' not found")),
     }
 }
 
 pub fn resume(id: &str) {
     let sessions = load_sessions();
     let s = sessions.iter().find(|s| s.id == id).unwrap_or_else(|| {
-        eprintln!("Session '{id}' not found.");
+        ui::error(format!("session '{id}' not found"));
         std::process::exit(1);
     });
     let claude_sid = s.claude_session_id.as_deref().unwrap_or_else(|| {
-        eprintln!("Session '{id}' has no linked Claude session (old format). Cannot resume.");
+        ui::warning(format!("session '{id}' has no linked Claude session (old format); cannot resume"));
         std::process::exit(1);
     });
     launcher::launch_resume(&s.provider, claude_sid, &s.working_dir);

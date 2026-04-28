@@ -2,6 +2,7 @@ mod config;
 mod launcher;
 mod provider;
 mod session;
+mod ui;
 
 use clap::{Parser, Subcommand};
 
@@ -96,8 +97,16 @@ fn main() {
         },
         Some(Commands::Config) => {
             let config = config::AppConfig::load();
-            println!("Config: {}", config::AppConfig::config_path().display());
-            println!("Default: {}", config.default_provider.as_deref().unwrap_or("(none)"));
+            ui::section("Configuration");
+            ui::kv("Path", ui::accent(config::AppConfig::config_path().display()));
+            ui::kv(
+                "Default",
+                config
+                    .default_provider
+                    .as_deref()
+                    .map(ui::accent)
+                    .unwrap_or_else(|| ui::muted("(none)")),
+            );
         }
         None => launcher::launch(None),
     }

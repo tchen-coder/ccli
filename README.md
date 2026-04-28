@@ -110,6 +110,8 @@ ccli config
 
 Run `ccli --help`, `ccli llm --help`, or `ccli session --help` for built-in command help.
 
+Color output is enabled automatically in interactive terminals. Set `NO_COLOR=1` to disable colors, or redirect output to a file to get plain text automatically.
+
 ## Example
 
 ```bash
