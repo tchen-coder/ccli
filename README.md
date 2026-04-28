@@ -38,7 +38,7 @@ cargo install --path .
 ## Cross-Platform Build
 
 ```bash
-# macOS (default)
+# macOS (local)
 cargo build --release
 
 # Linux x86_64
@@ -48,7 +48,24 @@ cargo build --release --target x86_64-unknown-linux-gnu
 cargo build --release --target aarch64-unknown-linux-gnu
 ```
 
-Binary output: `target/release/ccli` (or `target/<target>/release/ccli`).
+### Docker (recommended for Linux targets)
+
+Build static Linux binaries for amd64 and arm64 without a local cross-compilation toolchain:
+
+```bash
+# Build all Linux targets → dist/
+make release-linux
+
+# Build local (macOS) + Linux targets → dist/
+make release-all
+
+# Output:
+# dist/ccli-linux-amd64   (x86_64, static musl)
+# dist/ccli-linux-arm64   (aarch64, static musl)
+# dist/ccli-darwin-arm64  (if built on macOS ARM)
+```
+
+Requires Docker. The Dockerfile uses multi-stage builds with dependency caching for fast rebuilds.
 
 ## Usage
 
