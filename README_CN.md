@@ -2,45 +2,45 @@
 
 [English](./README.md) | [中文](./README_CN.md)
 
-Switch LLM providers for Claude Code CLI.
+为 Claude Code CLI 切换 LLM 提供商。
 
-`ccli` is a lightweight wrapper that launches [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with any Anthropic-compatible API provider — no proxy, no translation layer.
+`ccli` 是一个轻量级封装工具，让 [Claude Code](https://docs.anthropic.com/en/docs/claude-code) 可以连接任意 Anthropic 兼容 API 的模型提供商，无需代理或协议转换。
 
-## How It Works
+## 工作原理
 
 ```
 ccli use deepseek
     │
-    ├─ Reads provider config from ~/.ccli/config.toml
-    ├─ Writes a temporary settings.json with ANTHROPIC_BASE_URL + ANTHROPIC_AUTH_TOKEN
-    ├─ Generates a session UUID for deterministic session binding
-    └─ Spawns: claude --bare --settings <path> --model <model> --session-id <uuid>
+    ├─ 读取 ~/.ccli/config.toml 中的提供商配置
+    ├─ 生成临时 settings.json（ANTHROPIC_BASE_URL + ANTHROPIC_AUTH_TOKEN）
+    ├─ 生成 session UUID 用于确定性会话绑定
+    └─ 启动: claude --bare --settings <path> --model <model> --session-id <uuid>
 ```
 
-Only providers that expose an **Anthropic-compatible Messages API** endpoint are supported. No OpenAI-to-Anthropic translation is performed.
+仅支持暴露 **Anthropic 兼容 Messages API** 端点的提供商，不做 OpenAI 到 Anthropic 的协议转换。
 
-## Supported Providers
+## 支持的提供商
 
-| Provider | Endpoint | Notes |
-|----------|----------|-------|
-| Anthropic | `https://api.anthropic.com` | Native |
-| DeepSeek | `https://api.deepseek.com/anthropic` | Anthropic-compatible |
-| MiMo (Xiaomi) | `https://api.xiaomimimo.com/anthropic` | Anthropic-compatible |
-| OpenRouter | `https://openrouter.ai/api/v1` | Multi-model gateway |
+| 提供商 | 端点 | 说明 |
+|--------|------|------|
+| Anthropic | `https://api.anthropic.com` | 原生 |
+| DeepSeek | `https://api.deepseek.com/anthropic` | Anthropic 兼容 |
+| MiMo (小米) | `https://api.xiaomimimo.com/anthropic` | Anthropic 兼容 |
+| OpenRouter | `https://openrouter.ai/api/v1` | 多模型网关 |
 
-Custom providers can be added if they implement the Anthropic Messages API.
+支持自定义提供商，只要实现了 Anthropic Messages API。
 
-## Install
+## 安装
 
 ```bash
 git clone <repo-url> && cd compatible_llm_cli
 cargo install --path .
 ```
 
-## Cross-Platform Build
+## 跨平台编译
 
 ```bash
-# macOS (local)
+# macOS（本地）
 cargo build --release
 
 # Linux x86_64
@@ -50,56 +50,56 @@ cargo build --release --target x86_64-unknown-linux-gnu
 cargo build --release --target aarch64-unknown-linux-gnu
 ```
 
-### Docker (recommended for Linux targets)
+### Docker 编译（推荐用于 Linux 目标）
 
-Build static Linux binaries for amd64 and arm64 without a local cross-compilation toolchain:
+无需本地交叉编译工具链，一条命令生成 Linux amd64 + arm64 静态链接二进制：
 
 ```bash
-# Build all Linux targets → dist/
+# 编译所有 Linux 目标 → dist/
 make release-linux
 
-# Build local (macOS) + Linux targets → dist/
+# 本地 + Linux 目标 → dist/
 make release-all
 
-# Output:
-# dist/ccli-linux-amd64   (x86_64, static musl)
-# dist/ccli-linux-arm64   (aarch64, static musl)
-# dist/ccli-darwin-arm64  (if built on macOS ARM)
+# 产出:
+# dist/ccli-linux-amd64   (x86_64, musl 静态链接)
+# dist/ccli-linux-arm64   (aarch64, musl 静态链接)
+# dist/ccli-darwin-arm64  (macOS ARM 本地编译)
 ```
 
-Requires Docker. The Dockerfile uses multi-stage builds with dependency caching for fast rebuilds.
+需要 Docker。Dockerfile 使用多阶段构建 + 依赖缓存，重复编译很快。
 
-> **China users**: Configure a Docker Hub mirror for faster image pulls. In Docker Desktop → Settings → Docker Engine, add:
+> **国内用户**: 建议配置 Docker Hub 镜像加速。Docker Desktop → Settings → Docker Engine 中添加：
 > ```json
 > { "registry-mirrors": ["https://docker.1ms.run"] }
 > ```
 
-## Usage
+## 使用
 
 ```bash
-# Add a provider (interactive, with presets)
+# 添加提供商（交互式，内置预设）
 ccli llm add
 
-# List configured providers
+# 查看已配置的提供商
 ccli llm list
 
-# Set default provider
+# 设置默认提供商
 ccli llm set-default deepseek
 
-# Launch Claude Code with a provider
+# 使用指定提供商启动 Claude Code
 ccli use deepseek
 
-# Launch with default provider
+# 使用默认提供商启动
 ccli
 
-# View session history
+# 查看会话历史
 ccli session list
 
-# Resume a previous session
+# 恢复之前的会话
 ccli session resume <id>
 ```
 
-## Example
+## 示例
 
 ```bash
 $ ccli llm add
@@ -120,16 +120,16 @@ Provider 'deepseek' added.
 $ ccli use deepseek
 Launching Claude Code with [deepseek] model=deepseek-v4-pro
   session: a1b2c3d4 → claude:5e6f7a8b
-# ... Claude Code starts ...
+# ... Claude Code 启动 ...
 
 $ ccli session list
   [deepseek] deepseek-v4-pro
-    +a1b2c3d4 2026-04-29T10:30  /Users/me/project  "Implement auth middleware"
+    +a1b2c3d4 2026-04-29T10:30  /Users/me/project  "实现用户认证中间件"
 ```
 
-## Config
+## 配置
 
-Config file: `~/.ccli/config.toml`
+配置文件: `~/.ccli/config.toml`
 
 ```toml
 default_provider = "deepseek"
@@ -147,23 +147,23 @@ api_key_env = "MIMO_API_KEY"
 model = "mimo-v2.5-pro"
 ```
 
-API keys can be stored directly or referenced via environment variable (`api_key_env = "VAR_NAME"`).
+API key 可以直接存储，也可以通过环境变量引用（`api_key_env = "变量名"`）。
 
-## Architecture
+## 架构
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                        User                             │
-│                    ccli use <provider>                   │
+│                       用户                               │
+│                   ccli use <provider>                    │
 └────────────────────────┬────────────────────────────────┘
                          │
                          ▼
 ┌─────────────────────────────────────────────────────────┐
-│                     ccli (Rust)                          │
+│                    ccli (Rust)                            │
 │                                                         │
 │  ┌─────────────┐  ┌──────────────┐  ┌───────────────┐  │
 │  │ provider.rs  │  │ launcher.rs  │  │  session.rs   │  │
-│  │ Profile CRUD │  │ Process Mgmt │  │ History/Resume│  │
+│  │ 提供商管理    │  │ 进程管理      │  │ 会话/恢复     │  │
 │  └──────┬──────┘  └──────┬───────┘  └───────┬───────┘  │
 │         │                │                   │          │
 │         ▼                │                   │          │
@@ -174,28 +174,25 @@ API keys can be stored directly or referenced via environment variable (`api_key
 │  └─────────────┘         │                              │
 └──────────────────────────┼──────────────────────────────┘
                            │
-          Spawns with:     │  --bare --settings <path>
-          env override:    │  ANTHROPIC_BASE_URL + ANTHROPIC_AUTH_TOKEN
-          session bind:    │  --session-id <uuid> --model <model>
+          启动参数:         │  --bare --settings <path>
+          环境覆盖:         │  ANTHROPIC_BASE_URL + ANTHROPIC_AUTH_TOKEN
+          会话绑定:         │  --session-id <uuid> --model <model>
                            ▼
 ┌─────────────────────────────────────────────────────────┐
-│              Claude Code CLI (unchanged)                 │
+│            Claude Code CLI（完全不修改）                   │
 │                                                         │
-│  The entire Claude Code runtime remains untouched.      │
-│  ccli only controls which API endpoint and credentials  │
-│  Claude Code connects to. All Claude Code features —    │
-│  tools, hooks, MCP, context, slash commands — work      │
-│  exactly as they do natively.                           │
+│  Claude Code 运行时完全不变。ccli 仅控制 Claude Code     │
+│  连接哪个 API 端点和使用哪个凭证。所有 Claude Code 功能   │
+│  — 工具、hooks、MCP、上下文、斜杠命令 — 与原生一致。     │
 │                                                         │
-│  Upgrades to Claude Code are fully transparent:         │
-│  ccli adapts automatically since it only uses stable    │
-│  CLI flags (--bare, --settings, --session-id, --resume).│
+│  Claude Code 升级完全透明：ccli 仅使用稳定的 CLI 参数    │
+│  (--bare, --settings, --session-id, --resume)。          │
 └────────────────────────┬────────────────────────────────┘
                          │
                          │  Anthropic Messages API
                          ▼
         ┌────────────────────────────────┐
-        │      LLM Provider Endpoint     │
+        │       LLM 提供商端点            │
         │                                │
         │  ┌──────────┐  ┌───────────┐  │
         │  │ Anthropic │  │ DeepSeek  │  │
@@ -204,18 +201,18 @@ API keys can be stored directly or referenced via environment variable (`api_key
         │  │   MiMo   │  │OpenRouter │  │
         │  └──────────┘  └───────────┘  │
         │  ┌──────────────────────────┐ │
-        │  │  Any Anthropic-compat.   │ │
+        │  │  任意 Anthropic 兼容端点  │ │
         │  └──────────────────────────┘ │
         └────────────────────────────────┘
 ```
 
 ```
 src/
-├── main.rs       # CLI entry (clap)
-├── config.rs     # TOML config read/write (~/.ccli/config.toml)
-├── provider.rs   # Provider CRUD with presets
-├── launcher.rs   # Claude Code process management, session binding, summary extraction
-└── session.rs    # Session history, resume
+├── main.rs       # CLI 入口 (clap)
+├── config.rs     # TOML 配置读写 (~/.ccli/config.toml)
+├── provider.rs   # 提供商增删改查 + 预设
+├── launcher.rs   # Claude Code 进程管理、会话绑定、摘要提取
+└── session.rs    # 会话历史、恢复
 ```
 
 ## License
