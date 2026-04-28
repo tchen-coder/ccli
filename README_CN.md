@@ -74,30 +74,41 @@ make release-all
 > { "registry-mirrors": ["https://docker.1ms.run"] }
 > ```
 
-## 使用
+## 命令参考
 
-```bash
-# 添加提供商（交互式，内置预设）
-ccli llm add
-
-# 查看已配置的提供商
-ccli llm list
-
-# 设置默认提供商
-ccli llm set-default deepseek
-
-# 使用指定提供商启动 Claude Code
-ccli use deepseek
-
-# 使用默认提供商启动
+```text
 ccli
+  使用默认提供商启动 Claude Code。
 
-# 查看会话历史
+ccli use <provider>
+  使用指定提供商启动 Claude Code。
+
+ccli llm add
+  交互式添加提供商配置。
+
+ccli llm list
+  列出所有已配置的提供商。
+
+ccli llm remove <name>
+  删除一个提供商配置。
+
+ccli llm set-default <name>
+  设置默认提供商（运行 `ccli` 时使用）。
+
 ccli session list
+  按提供商和模型分组显示最近的会话。
 
-# 恢复之前的会话
+ccli session info <id>
+  查看某个会话的详细信息。
+
 ccli session resume <id>
+  恢复之前的 Claude Code 会话。
+
+ccli config
+  显示配置文件路径和当前默认提供商。
 ```
+
+运行 `ccli --help`、`ccli llm --help` 或 `ccli session --help` 查看内置帮助。
 
 ## 示例
 

@@ -6,7 +6,18 @@ mod session;
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "ccli", version, about = "Compatible LLM CLI - switch providers for Claude Code")]
+#[command(
+    name = "ccli",
+    version,
+    about = "Switch LLM providers for Claude Code CLI",
+    long_about = "ccli is a lightweight wrapper that launches Claude Code with any Anthropic-compatible\n\
+                  API provider. It manages provider profiles, handles authentication, and tracks\n\
+                  session history with resume support.\n\n\
+                  Quick start:\n  \
+                  ccli llm add          Add a provider (interactive)\n  \
+                  ccli use <provider>   Launch Claude Code with that provider\n  \
+                  ccli                  Launch with default provider"
+)]
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
@@ -16,43 +27,55 @@ struct Cli {
 enum Commands {
     /// Launch Claude Code with a specific provider
     Use {
-        /// Provider profile name
+        /// Provider profile name (as shown in `ccli llm list`)
         name: String,
     },
-    /// Manage LLM providers
+    /// Manage LLM provider profiles
     Llm {
         #[command(subcommand)]
         action: LlmAction,
     },
-    /// View session history
+    /// View and manage session history
     Session {
         #[command(subcommand)]
         action: SessionAction,
     },
-    /// Show current config path and default provider
+    /// Show config file path and current default provider
     Config,
 }
 
 #[derive(Subcommand)]
 enum LlmAction {
-    /// Add a new provider profile
+    /// Add a new provider profile (interactive, with presets)
     Add,
-    /// List all provider profiles
+    /// List all configured provider profiles
     List,
-    /// Remove a provider profile
-    Remove { name: String },
-    /// Set the default provider
-    SetDefault { name: String },
+    /// Remove a provider profile by name
+    Remove {
+        /// Provider profile name to remove
+        name: String,
+    },
+    /// Set the default provider used when running `ccli` without arguments
+    SetDefault {
+        /// Provider profile name to set as default
+        name: String,
+    },
 }
 
 #[derive(Subcommand)]
 enum SessionAction {
-    /// List recent sessions
+    /// List recent sessions grouped by provider and model
     List,
-    /// Show session details
-    Info { id: String },
-    /// Resume a previous session
-    Resume { id: String },
+    /// Show detailed info for a specific session
+    Info {
+        /// Session ID (short hash shown in `ccli session list`)
+        id: String,
+    },
+    /// Resume a previous Claude Code session
+    Resume {
+        /// Session ID to resume (must have a linked Claude session)
+        id: String,
+    },
 }
 
 fn main() {

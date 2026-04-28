@@ -74,30 +74,41 @@ Requires Docker. The Dockerfile uses multi-stage builds with dependency caching 
 > { "registry-mirrors": ["https://docker.1ms.run"] }
 > ```
 
-## Usage
+## CLI Reference
 
-```bash
-# Add a provider (interactive, with presets)
-ccli llm add
-
-# List configured providers
-ccli llm list
-
-# Set default provider
-ccli llm set-default deepseek
-
-# Launch Claude Code with a provider
-ccli use deepseek
-
-# Launch with default provider
+```text
 ccli
+  Launch Claude Code with the default provider.
 
-# View session history
+ccli use <provider>
+  Launch Claude Code with the specified provider profile.
+
+ccli llm add
+  Add a provider profile interactively.
+
+ccli llm list
+  List configured provider profiles.
+
+ccli llm remove <name>
+  Remove a provider profile.
+
+ccli llm set-default <name>
+  Set the default provider used by `ccli`.
+
 ccli session list
+  List recent sessions grouped by provider and model.
 
-# Resume a previous session
+ccli session info <id>
+  Show detailed info for one session.
+
 ccli session resume <id>
+  Resume a previous Claude Code session.
+
+ccli config
+  Show the config file path and current default provider.
 ```
+
+Run `ccli --help`, `ccli llm --help`, or `ccli session --help` for built-in command help.
 
 ## Example
 
