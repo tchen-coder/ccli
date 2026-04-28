@@ -128,6 +128,64 @@ API keys can be stored directly or referenced via environment variable (`api_key
 ## Architecture
 
 ```
+┌─────────────────────────────────────────────────────────┐
+│                        User                             │
+│                    ccli use <provider>                   │
+└────────────────────────┬────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│                     ccli (Rust)                          │
+│                                                         │
+│  ┌─────────────┐  ┌──────────────┐  ┌───────────────┐  │
+│  │ provider.rs  │  │ launcher.rs  │  │  session.rs   │  │
+│  │ Profile CRUD │  │ Process Mgmt │  │ History/Resume│  │
+│  └──────┬──────┘  └──────┬───────┘  └───────┬───────┘  │
+│         │                │                   │          │
+│         ▼                │                   │          │
+│  ┌─────────────┐         │                   │          │
+│  │  config.rs  │◄────────┤───────────────────┘          │
+│  │ ~/.ccli/    │         │                              │
+│  │ config.toml │         │                              │
+│  └─────────────┘         │                              │
+└──────────────────────────┼──────────────────────────────┘
+                           │
+          Spawns with:     │  --bare --settings <path>
+          env override:    │  ANTHROPIC_BASE_URL + ANTHROPIC_AUTH_TOKEN
+          session bind:    │  --session-id <uuid> --model <model>
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│              Claude Code CLI (unchanged)                 │
+│                                                         │
+│  The entire Claude Code runtime remains untouched.      │
+│  ccli only controls which API endpoint and credentials  │
+│  Claude Code connects to. All Claude Code features —    │
+│  tools, hooks, MCP, context, slash commands — work      │
+│  exactly as they do natively.                           │
+│                                                         │
+│  Upgrades to Claude Code are fully transparent:         │
+│  ccli adapts automatically since it only uses stable    │
+│  CLI flags (--bare, --settings, --session-id, --resume).│
+└────────────────────────┬────────────────────────────────┘
+                         │
+                         │  Anthropic Messages API
+                         ▼
+        ┌────────────────────────────────┐
+        │      LLM Provider Endpoint     │
+        │                                │
+        │  ┌──────────┐  ┌───────────┐  │
+        │  │ Anthropic │  │ DeepSeek  │  │
+        │  └──────────┘  └───────────┘  │
+        │  ┌──────────┐  ┌───────────┐  │
+        │  │   MiMo   │  │OpenRouter │  │
+        │  └──────────┘  └───────────┘  │
+        │  ┌──────────────────────────┐ │
+        │  │  Any Anthropic-compat.   │ │
+        │  └──────────────────────────┘ │
+        └────────────────────────────────┘
+```
+
+```
 src/
 ├── main.rs       # CLI entry (clap)
 ├── config.rs     # TOML config read/write (~/.ccli/config.toml)
