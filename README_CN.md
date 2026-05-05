@@ -104,6 +104,12 @@ ccli session info <id>
 ccli session resume <id>
   恢复之前的 Claude Code 会话。
 
+ccli session remove <id>
+  删除一个会话记录。
+
+ccli resume <id>
+  `ccli session resume <id>` 的快捷命令。
+
 ccli config
   显示配置文件路径和当前默认提供商。
 ```

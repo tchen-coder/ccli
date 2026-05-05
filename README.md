@@ -104,6 +104,15 @@ ccli session info <id>
 ccli session resume <id>
   Resume a previous Claude Code session.
 
+ccli session remove <id>
+  Remove a session record.
+
+ccli session summarize <id>
+  Regenerate the LLM summary for a session.
+
+ccli resume <id>
+  Shortcut for `ccli session resume <id>`.
+
 ccli config
   Show the config file path and current default provider.
 ```

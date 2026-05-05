@@ -17,6 +17,7 @@ use clap::{Parser, Subcommand};
                   Quick start:\n  \
                   ccli llm add          Add a provider (interactive)\n  \
                   ccli use <provider>   Launch Claude Code with that provider\n  \
+                  ccli resume <id>      Resume a previous session\n  \
                   ccli                  Launch with default provider"
 )]
 struct Cli {
@@ -40,6 +41,23 @@ enum Commands {
     Session {
         #[command(subcommand)]
         action: SessionAction,
+    },
+    /// Resume a previous Claude Code session (shortcut for `ccli session resume`)
+    Resume {
+        /// Session ID to resume (must have a linked Claude session)
+        id: String,
+    },
+    /// Remove a session record (shortcut for `ccli session remove`)
+    Remove {
+        /// Session ID to remove
+        id: String,
+    },
+    /// Manually set a custom title for a session (shortcut for `ccli session rename`)
+    Rename {
+        /// Session ID to rename
+        id: String,
+        /// New title
+        title: String,
     },
     /// Show config file path and current default provider
     Config,
@@ -77,6 +95,28 @@ enum SessionAction {
         /// Session ID to resume (must have a linked Claude session)
         id: String,
     },
+    /// Remove a session record by ID
+    Remove {
+        /// Session ID to remove (short hash shown in `ccli session list`)
+        id: String,
+    },
+    /// Regenerate the LLM summary for a session
+    Summarize {
+        /// Session ID to re-summarize
+        id: String,
+    },
+    /// Manually set a custom title for a session
+    Rename {
+        /// Session ID to rename
+        id: String,
+        /// New title (use quotes for multi-word titles)
+        title: String,
+    },
+    /// Output the full conversation of a session (opposite of resume)
+    Cat {
+        /// Session ID to output
+        id: String,
+    },
 }
 
 fn main() {
@@ -94,7 +134,14 @@ fn main() {
             SessionAction::List => session::list(),
             SessionAction::Info { id } => session::info(&id),
             SessionAction::Resume { id } => session::resume(&id),
+            SessionAction::Remove { id } => session::remove(&id),
+            SessionAction::Summarize { id } => session::summarize(&id),
+            SessionAction::Rename { id, title } => session::rename(&id, &title),
+            SessionAction::Cat { id } => session::cat(&id),
         },
+        Some(Commands::Resume { id }) => session::resume(&id),
+        Some(Commands::Remove { id }) => session::remove(&id),
+        Some(Commands::Rename { id, title }) => session::rename(&id, &title),
         Some(Commands::Config) => {
             let config = config::AppConfig::load();
             ui::section("Configuration");
